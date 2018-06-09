@@ -1,0 +1,49 @@
+body {
+    background: #fff;
+    color: #fff;
+    font: 300 100.1% "Helvetica Neue", Helvetica, "Arial Unicode MS", Arial, sans-serif;   
+}
+#step {
+	background: #fff;
+    height: 200px;
+    left: 50%;
+    margin: -240px 0 0 -320px;
+    position: absolute;
+    top: 30%;
+    width: 740px;
+}
+#holder {
+    height: 1050px;
+    left: 50%;
+    margin: -20px 0 0 -320px;
+    position: absolute;
+    top: 30%;
+    width: 740px;
+}
+#copy {
+    bottom: 0;
+    font: 300 .7em "Helvetica Neue", Helvetica, "Arial Unicode MS", Arial, sans-serif;
+    position: absolute;
+    right: 1em;
+    text-align: right;
+}
+#copy a {
+    color: #fff;
+}
+
+/* subContents要素 
+----------------------------------------------------------- */  
+div#subContents {  
+    width: 200px;
+    height: 740px; 
+    left: 80%; 
+    background: #F7F7F7;  
+    padding: 10px;  
+    position: fixed;  
+    top: 100px;  
+    z-index: 20;  
+}  
+* html div#subContents {     
+    position: absolute;     
+    top: expression(eval(document.documentElement.scrollTop+100));     
+}
