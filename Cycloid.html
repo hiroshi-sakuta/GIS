@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>サイクロイド</title>
+        <link rel="stylesheet" href="demo_landscape.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="demo-print.css" type="text/css" media="print">
+        
+        <script type="text/javascript">
+
+	        var _gaq = _gaq || [];
+	        _gaq.push(['_setAccount', 'UA-35267547-3']);
+	        _gaq.push(['_trackPageview']);
+
+	        (function() {
+		        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		     })();
+
+		</script>
+        
+
+        <script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+//点と名前はセットにしたい 座標と円も
+//垂直線を引く
+//平行線を引く
+//距離の計算
+//グリッドみたいな
+        	window.addEventListener('load', drawscreen, false);
+            function drawscreen() {
+            	//canvasの生成
+                //var r = Raphael("holder", 740, 1050), //paperってインスタンス的な？
+				var r = Raphael("holder", 1050, 740),
+                
+                //コントロールのデザイン情報を保持する連想配列
+                discattr = {fill: "#222", stroke: "#000"};
+                //attr : Sets the attributes of the element.
+                //rect(x, y, width, height, [r])
+                //外枠のデザイン
+                
+                r.rect(1, 1, r.width-1, r.height-1, 10).attr({stroke: "#666"});
+                r.text(r.width/2, 20, "サイクロイド").attr({"font-size": 16});
+                
+                var halfLineX = r.width/2;
+                var halfLineY = r.height/2;
+                
+		
+
+	            //for(var i=0;i<5;i++)
+	            	//section.mousedown( function(e){this.attr({fill:"hsb(0.5,0.3,0.8)", stroke:"none"}) });
+
+	            //section[1].mousedown(function(){ section[1].attr({fill:Raphael.getColor(0.8), stroke:"red"}) });
+
+                var problem = function() {
+
+                	/* ためし */
+                	
+                	var step = Raphael("step", 740, 200);
+                	var phases = 0;
+                	var explanationText = new Array(
+	                	"円が右側に半回転転がる時、その中心Oは半円周に等しい距離OO6を移動し、動点Pは最上位から最下位P6に達する。",
+	                	"Step1 : 半円周とOO6の長さを共に６等分し、それぞれ1,2,･･･,とO1,O2,･･･とする。",
+	                	"Step2 : 転円の中心がO1に来た時、点PはP1に移動し、また中心がO2に来た時はP2に移動する。",
+	                	"Step3 : P-P1-P2-･･･-P6を順次結べば曲線を得る。転円が左側へ転がるときも同様である。"
+	                	);
+                	step.rect(1, 1, step.width-1, step.height-1, 10).attr({fill:"hsb(0,0,0.8)"});
+                	var explanationOfStep = step.text(370, 170, explanationText[0]).attr({"font-size":11});
+                	var section = new Array();
+                	var sectionName = new Array();
+                	
+                	for(var i=0;i<5;i++)
+                		var temp = Raphael.getColor(0.8);
+                		
+                	for(var i=0;i<explanationText.length-1;i++){
+	                	
+	                	section.push( step.circle(740/(explanationText.length)*(i+1),100, 30).attr({fill:"r white-"+Raphael.getColor(0.8), stroke:"none", "stroke-width":"3"}) );
+	                	sectionName.push( step.text(740/(explanationText.length)*(i+1), 100, "step"+(i+1)).attr({"font-size":12,"font-style":"italic"}) );
+	                	section[i].mousedown(function(e) { 
+	                		for(var i=0;i<explanationText.length-1;i++)
+	                			if(this != section[i]) section[i].animate({r:30},800);
+	                		initDisplay();
+	                		this.pushObj();
+	                		console.log(phases);
+	                		//initAllNames();
+	                		answer();
+	                	});
+	                	section[i].mouseover(function(e) { this.animate({r:50},500); });
+	                	section[i].mouseout(function(e) { if(this.isDisplay == false)this.animate({r:30},800) });
+	                	//section[i].mouseover(function(e) { this.attr({fill:"white",stroke:"black"}); });
+	                	//section[i].mouseout(function(e) { this.attr({stroke:"none"}); });
+	                }
+	                
+	                initDisplay();
+	                function initDisplay(){
+	                	for(var i=0;i<explanationText.length-1;i++)
+		                	section[i].isDisplay = false;
+	                }
+	                
+	                function setPhases(id){
+		                phases = id;
+		                explanationOfStep.attr({text: explanationText[id]});
+				if(id != 0) section[id-1].isDisplay = true;
+				else initDisplay();
+	                }
+	                section[0].pushObj = function(){
+	                	(phases!=1) ? setPhases(1) : setPhases(0);
+		        	}
+		            section[1].pushObj = function(){
+	                	(phases!=2) ? setPhases(2) : setPhases(0);
+			      	}
+			   	    section[2].pushObj = function(){
+		        	    (phases!=3) ? setPhases(3) : setPhases(0);
+ 		      	    }
+	        	    
+
+
+		            var flag=0; //ステップ1が選択されたかどうかのフラグ
+		            			//これがないと、ステップ未選択時からステップ2以降を選択した際に、ステップ1の描画をスキップしてしまう。
+
+			/*******      本題       ********/
+					
+					var numberOfDivision = 20;
+					var nameOfPoints_o = new Array();
+					var nameOfPoints_p = new Array();
+					for(var i=0;i<7;i++){
+						nameOfPoints_o[i] = r.set( r.text(null).attr({opacity:0}),
+			            						 r.text(null).attr({opacity:0}) );
+			            nameOfPoints_p[i] = r.set( r.text(null).attr({opacity:0}),
+			            						 r.text(null).attr({opacity:0}) );
+			        }
+		            var suffixPos = {x:8, y:3};
+					
+                    r.path([["M", 0, halfLineY], ["L", r.width, halfLineY]]);
+                    var radius = 100;
+                    var circumference = radius * Math.PI;
+                    
+                    var centerPoint = r.circle(halfLineX, halfLineY, 5).attr({fill:"black"});
+                    var Circle = r.circle(null);	//円
+                    var baseCircle = r.circle(null);
+					Circle.attr({cx:halfLineX, cy:halfLineY , r:radius, stroke:"black"});
+					baseCircle.attr({cx:halfLineX, cy:halfLineY , r:radius, stroke:"red", "stroke-dasharray":"-. "});
+					r.text(halfLineX-14, halfLineY+14, "O").attr({stroke: "#256", "font-size": 14});
+                    
+                    var divisionPoints = new Array();
+                    var verticalLines = new Array();	//垂直線を保存する配列				
+                    for(var i=0;i<numberOfDivision;i++){
+	                    divisionPoints.push(circumference * i/6);
+	                    verticalLines.push( r.path(null) );
+                    }
+                    
+                    var cycleSin = new Array();
+                    var cycleCos = new Array();
+                    for(var i=0;i<numberOfDivision;i++){
+	                    	cycleSin.push( radius * Math.sin((90-30*i) * Math.PI/180) );
+	                    	cycleCos.push( radius * Math.cos((90-30*i) * Math.PI/180) );
+	                }
+	                
+                    var pathPoints = new Array(); //パスを保存する配列
+                    for(var i=0;i<numberOfDivision;i++){
+	                    pathPoints.push( r.circle(null) );
+                    }
+                    
+                    var stringPath = new String();
+                    stringPath = "M " + String(halfLineX-(divisionPoints[numberOfDivision-1]+cycleCos[numberOfDivision-1])) + "," + 
+                    			String(halfLineY-cycleSin[numberOfDivision-1]) + " R";
+                    for(var i=numberOfDivision-2;i>0;i--){
+	                    stringPath += " " + String(halfLineX-(divisionPoints[i]+cycleCos[i])) + "," + String(halfLineY-cycleSin[i]);
+                    } 
+                    for(var i=0;i<numberOfDivision;i++){
+	                    stringPath += " " + String(halfLineX+divisionPoints[i]+cycleCos[i]) + "," + String(halfLineY-cycleSin[i]);
+                    }
+                    var cycloid = r.path(null);
+                    
+					
+					var controls = r.set(
+                    		//2点のコントロールを結ぶ線
+                            r.path(null).attr({"stroke-width":2}),
+                            r.circle(halfLineX+radius, halfLineY, 5).attr(discattr)
+         
+                    );
+					
+					//初期化処理
+					function init(){
+						
+						for(var i=0;i<numberOfDivision;i++){
+                    		pathPoints[i].attr({stroke:"none", fill:"none"});
+                    	}
+                    	
+                    	for(var i=0;i<7;i++){
+                    			nameOfPoints_p[i].items[0].attr({opacity:0});
+                    			nameOfPoints_p[i].items[1].attr({opacity:0});
+                    	}
+                    	
+                    	if(phases <= 1){
+                    		for(var i=0;i<numberOfDivision;i++){
+								verticalLines[i].attr({path:null});
+							}
+                    		for(var i=0;i<7;i++){
+                    			nameOfPoints_o[i].items[0].attr({opacity:0});
+                    			nameOfPoints_o[i].items[1].attr({opacity:0});
+                    		}
+                    	}
+                    	if(phases==0){
+                    		flag=0;
+                    		baseCircle.attr({r:radius});
+                    	} 
+                    	cycloid.attr({path:null});
+					}
+				
+					/*
+					1. 分割線
+					2. パスの点
+					3.　パスを引く
+					
+					*/
+					
+					/* 半円の長さを6分割する */
+					function step1(){
+						circumference = radius * Math.PI; 
+						
+						//ステップ1のとき、もしくは、ステップ未選択時からステップ2以降が選択された時
+						if(phases == 1 || flag==0){
+							//分割の線はそのまま！
+							flag=1;
+							baseCircle.attr({r:radius});
+							for(var i=0;i<numberOfDivision;i++){
+                    			divisionPoints[i] = circumference * i/6;	//点の座標を更新
+                    			verticalLines[i].attr({path:[["M", halfLineX+divisionPoints[i], 0], 
+	                    									["L", halfLineX+divisionPoints[i], r.height]]});	//線の更新
+	                    	}	
+	                  
+	                    	for(var i=1;i<7;i++){
+	                    		nameOfPoints_o[i] = r.set(
+			            			r.text(halfLineX+divisionPoints[i]+14, halfLineY+14, "O")
+			            															.attr({stroke: "#256", "font-size": 14}),
+			            			r.text(halfLineX+divisionPoints[i]+14+suffixPos.x, halfLineY+14+suffixPos.y, i)
+			            															.attr({stroke: "#256", "font-size":7}));
+		            		}
+	                    	
+	                    }					
+						
+					}
+					
+					/* パスが通る点を求める */
+					function step2(){
+					
+						var cycleSin = new Array();
+	                    var cycleCos = new Array();
+                    
+	                    for(var i=0;i<numberOfDivision;i++){
+	                    	cycleSin.push( radius * Math.sin((90-30*i) * Math.PI/180) );
+	                    	cycleCos.push( radius * Math.cos((90-30*i) * Math.PI/180) );
+	                    }
+                    
+	                    for(var i=0;i<numberOfDivision;i++){
+                    		pathPoints[i].attr({cx:halfLineX+divisionPoints[i]+cycleCos[i], cy:halfLineY-cycleSin[i],
+                    																					 r:5, stroke:"black", fill:"black"});
+                    	}
+                    
+                    	for(var i=0;i<7;i++){
+	                    		nameOfPoints_p[i] = r.set(
+			            			r.text(pathPoints[i].attr("cx")-14, pathPoints[i].attr("cy")-14, "P")
+			            															.attr({stroke: "#256", "font-size": 14}),
+			            			r.text(pathPoints[i].attr("cx")-14+suffixPos.x, pathPoints[i].attr("cy")-14+suffixPos.y, (i==0)?"":i)
+			            															.attr({stroke: "#256", "font-size":7}));
+		            		}
+	                    
+					}
+					/* パスを引く */
+					function step3(){
+					
+						stringPath = "M " + String( 2*halfLineX-pathPoints[numberOfDivision-1].attr("cx") ) + "," + 
+                    			String(pathPoints[numberOfDivision-1].attr("cy")) + " R";
+                    	for(var i=numberOfDivision-2;i>0;i--){
+	                    	stringPath += " " + String(2*halfLineX-pathPoints[i].attr("cx")) + "," + String(pathPoints[i].attr("cy"));
+	                    }
+	                    //stringPath = "M " + String(halfLineX+divisionPoints[0]+cycleCos[0]) + "," + String(halfLineY-cycleSin[0]) + " R"; 
+	                    for(var i=0;i<numberOfDivision;i++){
+	                    	stringPath += " " + String(pathPoints[i].attr("cx")) + "," + String(pathPoints[i].attr("cy"));
+	                    }
+						
+						cycloid.attr({path:stringPath});
+						
+					}
+					
+                    function answer() {                   
+                    	init();
+                    	if(phases>=1)step1();
+                    	if(phases>=2)step2();
+                    	if(phases>=3)step3();
+               		}
+                	
+                	//initAllNames();
+                	answer();
+                
+                    //オリジナル
+                    controls[1].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        radius = Math.abs(X - halfLineX);
+                        Circle.attr({r:radius});
+                        if(phases == 0)baseCircle.attr({r:radius});
+                        this.attr({cx: X}); //コントロールの座標を更新
+                        
+                        answer();
+                    };
+                    
+                    controls.drag(move, up);
+                }
+                
+                //どれだけ動いたかをdx,dyに保存し、更新メソッドを呼び出す
+                function move(dx, dy) {
+                    this.update(dx - (this.dx || 0), dy - (this.dy || 0));
+                    this.dx = dx;
+                    this.dy = dy;
+                }
+                //ドラッグが終わったらクリア
+                function up() {
+                    this.dx = this.dy = 0;
+                }
+                
+                problem();
+                
+            };
+            
+        </script>
+    </head>
+    <body>
+		<div id="holder"></div>
+		<div id="step"></div>
+        
+    </body>
+</html>

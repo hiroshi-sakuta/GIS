@@ -1,0 +1,650 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>平面上の点</title>
+        <link rel="stylesheet" href="demo.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="demo-print.css" type="text/css" media="print">
+        
+        
+        
+        
+        /////google/////
+        <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-35267547-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+        
+        <script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+//点と名前はセットにしたい 座標と円も
+//垂直線を引く
+//平行線を引く
+//距離の計算
+//グリッドみたいな
+        	window.addEventListener('load', drawscreen, false);
+            function drawscreen() {
+            	//canvasの生成
+                var r = Raphael("holder", 740, 1050), //paperってインスタンス的な？
+                
+                //コントロールのデザイン情報を保持する連想配列
+                discattr = {fill: "#222", stroke: "#000"};
+                //attr : Sets the attributes of the element.
+                //rect(x, y, width, height, [r])
+                //外枠のデザイン
+                
+                r.rect(1, 1, r.width-1, r.height-1, 10).attr({stroke: "#666"});
+                r.text(r.width/2, 20, "平面上の点").attr({"font-size": 16});
+                var halfLine = r.height/2 + 100;
+                var pathHalfLine = [["M", 0, halfLine], ["L", r.width, halfLine]];
+                r.path(pathHalfLine);
+		
+
+	            //for(var i=0;i<5;i++)
+	            	//section.mousedown( function(e){this.attr({fill:"hsb(0.5,0.3,0.8)", stroke:"none"}) });
+
+	            //section[1].mousedown(function(){ section[1].attr({fill:Raphael.getColor(0.8), stroke:"red"}) });
+
+                var problem = function() {
+
+                	/* ためし */
+                	
+                	var step = Raphael("step", 740, 200);
+                	var phases = 0;
+                	var explanationText = new Array(
+	                	"三角形ABC上の点Pの平面図Ptが与えられたとき、点Pの正面図Pfを求める。",
+	                	"Step1 : 平面図において、AtとPtとを結びBtCtとの交点をDtとする。",
+	                	"Step2 : 直線ADは三角形ABC上の直線である。点Dは直線BC上の点であるから、Dtから対応線を引き正面図においてBfCfとの交点Dfを求める。",
+	                	"Step3 : AfDfを結ぶと点Pは直線AD上の点であるから、Ptからの対応線とAfDfとの交点としてPfが求められる。",
+	                	"Step1' : 別解：Bfを通る水平な線と、AfCfとの交点を求め、更にその交点を通る鉛直な線とAtCtとの交点を求める。",
+	                	"Step2' : 交点とBtを結び、この線分と垂直に副投影線を引く。",
+	                	"Step3' : 点視図を描きA1C1及びP1,Q1を求める。"
+	                	);
+                	step.rect(1, 1, step.width-1, step.height-1, 10).attr({fill:"hsb(0,0,0.8)"});
+                	var explanationOfStep = step.text(370, 170, explanationText[0]).attr({"font-size":11});
+                	var section = new Array();
+                	var sectionName = new Array();
+                	
+                	for(var i=0;i<3;i++)
+                		var temp = Raphael.getColor(0.8);
+                		
+                	for(var i=0;i<explanationText.length-1;i++){
+	                	
+	                	section.push( step.circle(740/explanationText.length*(i+1),100, 30).attr({fill:"r white-"+Raphael.getColor(0.8), stroke:"none", "stroke-width":"3"}) );
+	                	sectionName.push( step.text(740/explanationText.length*(i+1), 100, 
+	                						(i<3)?"step"+(i+1):"step"+(i-2)+"'").attr({"font-size":12,"font-style":"italic"}) );
+	                	section[i].mousedown(function(e) { 
+	                		for(var i=0;i<explanationText.length-1;i++)
+	                			if(this != section[i]) section[i].animate({r:30},800);
+	                		initDisplay();
+	                		this.pushObj();
+	                		console.log(phases);
+	                		initAllNames();
+	                		answer();
+	                	});
+	                	section[i].mouseover(function(e) { this.animate({r:50},500); });
+	                	section[i].mouseout(function(e) { if(this.isDisplay == false)this.animate({r:30},800) });
+	                	//section[i].mouseover(function(e) { this.attr({fill:"white",stroke:"black"}); });
+	                	//section[i].mouseout(function(e) { this.attr({stroke:"none"}); });
+	                }
+	                
+	                initDisplay();
+	                function initDisplay(){
+	                	for(var i=0;i<explanationText.length-1;i++)
+		                	section[i].isDisplay = false;
+	                }
+	                
+	                function setPhases(id){
+		                phases = id;
+		                explanationOfStep.attr({text: explanationText[id]});
+		                if(id != 0) section[id-1].isDisplay = true;
+		                else initDisplay();
+	                }
+	                
+	                section[0].pushObj = function(){
+	                	(phases!=1) ? setPhases(1) : setPhases(0);
+		        	}
+		            section[1].pushObj = function(){
+	                	(phases!=2) ? setPhases(2) : setPhases(0);
+			      	}
+			   	    section[2].pushObj = function(){
+		        	    (phases!=3) ? setPhases(3) : setPhases(0);
+ 		      	    }
+	        	    section[3].pushObj = function(){
+			            (phases!=4) ? setPhases(4) : setPhases(0);
+			        }
+			        section[4].pushObj = function(){
+			            (phases!=5) ? setPhases(5) : setPhases(0);
+			        }
+			        section[5].pushObj = function(){
+			            (phases!=6) ? setPhases(6) : setPhases(0);
+			        }
+ 
+
+			/*******      本題       ********/
+			
+			//初期位置の設定
+                	//M:moveto C:curveto L:lineto
+                	//左上始点(x,y) 右上制御点(ax,ay)
+                	//左下制御点(bx,by) 右下終点(zx,zy)
+                	var p1 = {x:140, y:50+halfLine};//左上   halfLineは625
+                	var p2 = {x:50, y:200+halfLine};//右下
+                	var p3 = {x:330,  y:320+halfLine};//左下
+                	
+                	var p4 = {x:p1.x, y:300};//左下
+                	var p5 = {x:p2.x, y:520};//右上	
+                	var p6 = {x:p3.x, y:450};//左上
+                	
+                	var Pf = {x:160, y:200+halfLine};
+                	var Qf = {x:110, y:160+halfLine};
+                	var Pt = {x:Pf.x,  y:460};
+                	var Qt = {x:Qf.x, y:410};
+                	
+
+			//それぞれのパスを配列で保存
+                    var path = [["M", p1.x, p1.y], ["L", p2.x, p2.y],
+                    			["M", p2.x, p2.y], ["L", p3.x, p3.y],
+                    			["M", p3.x, p3.y], ["L", p1.x, p1.y],
+                    			["M", p4.x, p4.y], ["L", p5.x, p5.y],
+                    			["M", p5.x, p5.y], ["L", p6.x, p6.y],
+                    			["M", p6.x, p6.y], ["L", p4.x, p4.y]];
+
+                    //コントロールをsetで保存                    
+                    var controls = r.set(
+                    		//2点のコントロールを結ぶ線
+                            r.path(path).attr({"stroke-width":2}),
+                            
+                            /* 三角形の頂点 */
+                            r.circle(p1.x, p1.y, 5).attr(discattr),
+                            r.circle(p2.x, p2.y, 5).attr(discattr),
+                            r.circle(p3.x, p3.y, 5).attr(discattr),
+                            r.circle(p4.x, p4.y, 5).attr(discattr),
+                            r.circle(p5.x, p5.y, 5).attr(discattr),
+                            r.circle(p6.x, p6.y, 5).attr(discattr),
+                            
+                            /* 三角形の内側の点 */
+                            r.circle(Pf.x, Pf.y, 5).attr(discattr),
+                            r.circle(Qf.x, Qf.y, 5).attr(discattr),
+                            r.circle(Pt.x, Pt.y, 5).attr(discattr),
+                            r.circle(Qt.x, Qt.y, 5).attr(discattr)
+                    );
+                    
+			//点に対するサフィックスの位置の指定
+		            var suffixPos = {x:7, y:3};
+		            var suffixPosForM ={x:8, y:3};
+		            var fSize = 14;
+		            
+			//点の名前とサフィックスをsetで保持
+                    var nameOfControls = r.set(
+                    		//各頂点
+                            r.set(	
+                            	r.text(p1.x-14, p1.y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1.x-14+suffixPos.x, p1.y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(	
+                            	r.text(p2.x-14, p2.y+14, "B").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p2.x-14+suffixPos.x, p2.y+14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(
+                            	r.text(p3.x+14, p3.y+14, "C").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p3.x+14+suffixPos.x, p3.y+14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(	
+                            	r.text(p4.x-14, p4.y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p4.x-14+suffixPos.x, p4.y-14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(
+                            	r.text(p5.x-14, p5.y-14, "B").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(p5.x-14+suffixPos.x, p5.y-14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                           		),
+                            r.set(
+                            	r.text(p6.x+14, p6.y+14, "C").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(p6.x+14+suffixPos.x, p6.y+14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                           		),
+                           		
+                           	//平面上の点
+                            r.set(
+                            	r.text(Pf.x-14, Pf.y-14, "P").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(Pf.x-14+suffixPos.x, Pf.y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                           		),
+                           	r.set(
+                            	r.text(Pt.x-14, Pt.y-14, "P").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(Pt.x-14+suffixPos.x, Pt.y-14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                           		),
+                           	r.set(
+                            	r.text(Qf.x+14, Qf.y-14, "Q").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(Qf.x+14+suffixPos.x, Qf.y-14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                           		),
+                           	r.set(
+                            	r.text(Qt.x+14, Qt.y-14, "Q").attr({stroke: "#256", "font-size": 14}),
+                           		r.text(Qt.x+14+suffixPos.x, Qt.y-14+suffixPos.y, "T").attr({stroke: "#256", "font-size":7})
+                           		)
+                           		
+                    );
+                    
+                    
+                    //各変数（図形：パス、円など）の宣言　　解答をステップ毎に表示するためここに宣言
+                   
+					
+					// ＊座標、円、名前を連想配列にでもまとめるといいかも
+					var nameOfa1 = setTextSets();
+					var nameOfb1 = setTextSets();
+					var nameOfc1 = setTextSets();
+					var inter;
+					
+					function setTextSets(){
+						return r.set( r.text(null), r.text(null) );
+					}
+								
+					function initName (name){
+						name[0].attr({stroke: "#256", "font-size":14, opacity:0});
+						name[1].attr({stroke: "#256", "font-size":7, opacity:0});
+					}
+					
+					function initAllNames(){
+						initName (nameOfdt);
+						initName (nameOfdf);
+						initName (nameOfa1);
+						initName (nameOfb1);
+						initName (nameOfc1);
+						initName (nameOfp1);
+						initName (nameOfq1);
+					}
+					
+
+					function init(){
+						
+						aTpT.attr({path:null});
+						aTdT.attr({path:null});
+						varticalLine.attr({path:null});
+						dt.attr({stroke:"none"});
+						df.attr({stroke:"none"});
+						aFdF.attr({path:null});
+						
+						horizontalLine.attr({path:null});
+						perspectiveLine.attr({path:null});
+						bTeT.attr({path:null});
+						ef.attr({stroke:"none"});
+						et.attr({stroke:"none"});
+						a1.attr({stroke:"none"});
+						b1.attr({stroke:"none"});
+						c1.attr({stroke:"none"});
+						p1.attr({stroke:"none"});
+						q1.attr({stroke:"none"});
+						a1c1.attr({path:null});
+					}
+					
+					
+					var aTpT = r.path(null);
+					var aTdT = r.path(null);
+					var dt = r.circle(null);
+					var varticalLine = r.path(null);
+					var df = r.circle(null);
+					var aFdF = r.path(null); 
+					
+					var nameOfdt = setTextSets();
+					var nameOfdf = setTextSets();
+					
+					
+					/*** 解法1 ***/
+					function step1(){
+						//aTとpTを結ぶ
+						aTpT.attr({path:[["M", controls[4].attr("cx") , controls[4].attr("cy")],
+									 	 ["L", controls[9].attr("cx") , controls[9].attr("cy")]]});
+						
+						//線分aTpTをスケールして、辺bTcTとの交点をつくる
+						var scale = r.height / (controls[9].attr("cy") - controls[4].attr("cy"));
+						aTpT.attr({path: Raphael.transformPath(aTpT.attr("path"), "s" + scale + "," + scale)});
+						aTpT.hide();
+						inter = Raphael.pathIntersection(aTpT.attr("path"), [path[8], path[9]]);
+						//交点をdTとする
+						dt.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"black"});
+						nameOfdt[0].attr({text:"d", x: inter[0].x+14, y: inter[0].y+14, opacity:1});
+                		nameOfdt[1].attr({text:"T", x: inter[0].x+14+suffixPos.x, y: inter[0].y+14+suffixPos.y, opacity:1});
+						//aTとdTを結ぶ
+						aTdT.attr({path:[["M", controls[4].attr("cx") , controls[4].attr("cy")],
+									 	 ["L", dt.attr("cx") , dt.attr("cy")]]});
+						
+					}
+					
+					
+					
+					/*  */
+					function step2(){
+						//dtを通る鉛直なパスを引く
+						varticalLine.attr({path:[["M", dt.attr("cx") , 0],
+									 			["L", dt.attr("cx") , r.height]]});
+						//varticalLine.hide();
+						
+						inter = Raphael.pathIntersection(varticalLine.attr("path"), [path[2], path[3]]);
+						df.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"black"});
+						nameOfdf[0].attr({text:"d", x: inter[0].x+14, y: inter[0].y+14, opacity:1});
+                		nameOfdf[1].attr({text:"F", x: inter[0].x+14+suffixPos.x, y: inter[0].y+14+suffixPos.y, opacity:1});
+						
+					}
+					
+					function step3(){
+						aFdF.attr({path:[["M", controls[1].attr("cx") , controls[1].attr("cy")],
+									 	 ["L", df.attr("cx") , df.attr("cy")]]});
+					}
+					
+					
+					
+					/*** 別解 ***/
+					
+					var ef = r.circle(null);
+					var horizontalLine = r.path(null);
+					var et = r.circle(null);
+					var bTeT = r.path(null);
+					var perspectiveLine = r.path(null);
+					var a1 = r.circle(null);
+                	var b1 = r.circle(null);
+                	var c1 = r.circle(null);
+               		var p1 = r.circle(null);
+               		var q1 = r.circle(null);
+               		/* //上にありました。
+               		var nameOfa1 = setTextSets();
+               		var nameOfb1 = setTextSets();
+               		var nameOfc1 = setTextSets();
+               		var nameOfd1 = setTextSets();
+               		*/
+               		var nameOfp1 = setTextSets();
+               		var nameOfq1 = setTextSets();
+					var angleBtEt;
+					var a1c1 = r.path(null);
+					
+					function step4(){
+						horizontalLine.attr({path:[["M", 0, controls[2].attr("cy")],
+									 		   ["L", r.width, controls[2].attr("cy")]]});
+						inter = Raphael.pathIntersection(horizontalLine.attr("path"), [path[4], path[5]]);
+						ef.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"black"});
+					
+						varticalLine.attr({path:[["M", ef.attr("cx") , 0],
+									 		 ["L", ef.attr("cx") , r.height]]});
+						inter = Raphael.pathIntersection(varticalLine.attr("path"), [path[10], path[11]]);
+						et.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"black"});                		
+                		
+					}
+					
+					/* mt,ntとmf,nfを求める */
+					function step5(){
+						bTeT.attr({path:[["M", controls[5].attr("cx"), controls[5].attr("cy")],
+									 		 ["L", et.attr("cx"), et.attr("cy")]]});
+						var scale = r.width / (et.attr("cx") - controls[5].attr("cx"));
+						perspectiveLine.attr(
+										{path: Raphael.transformPath(bTeT.attr("path"), "t300,0 r90 s"+scale+","+scale),
+										 stroke: "green"}
+										 );
+
+						//Math.atan2(y, x)
+						angleBtEt = Math.atan2(et.attr("cy") - controls[5].attr("cy"), et.attr("cx") - controls[5].attr("cx"));
+
+					}
+					
+					function step6(){
+						function getDistance(i, j, point){
+                			var matrix = Raphael.matrix();
+                			matrix.rotate(Raphael.deg(angleBtEt-Math.PI/2), controls[i].attr("cx"), controls[i].attr("cy"));
+                		
+                			var tempPoint = {x:matrix.x(controls[i].attr("cx"), r.height),
+                						 y:matrix.y(controls[i].attr("cx"), r.height)};
+                		
+                			var tempLine = r.path([["M", controls[i].attr("cx"), controls[i].attr("cy")],
+                									["L", tempPoint.x, tempPoint.y]]);
+                			tempLine.hide();
+                			inter = Raphael.pathIntersection(perspectiveLine.attr("path"), tempLine.attr("path"));
+                			
+                			matrix = Raphael.matrix();
+                			matrix.rotate( Raphael.deg(angleBtEt), inter[0].x, inter[0].y);
+                			
+                			var temp = {x: matrix.x(inter[0].x + (controls[j].attr("cy") - halfLine), inter[0].y),
+                						y: matrix.y(inter[0].x + (controls[j].attr("cy") - halfLine), inter[0].y)};
+                			point.attr({cx:temp.x, cy:temp.y, r:5, stroke:"black"});
+                		}
+                		getDistance(4, 1, a1);
+                		getDistance(5, 2, b1);
+                		getDistance(6, 3, c1);
+                		getDistance(9, 7, p1);
+                		getDistance(10, 8, q1);
+                		p1.attr({stroke:"red"});
+                		q1.attr({stroke:"red"});
+                		
+						a1c1.attr({path:[["M", a1.attr("cx"), a1.attr("cy")],
+										 ["L", c1.attr("cx"), c1.attr("cy")]]});
+						nameOfa1[0].attr({text:"A", x: a1.attr("cx")-14, y: a1.attr("cy")-14, opacity:1});
+                		nameOfa1[1].attr({text:"1", x: a1.attr("cx")-14+suffixPos.x, y: a1.attr("cy")-14+suffixPos.y, opacity:1});
+                		
+                		nameOfb1[0].attr({text:"B", x: b1.attr("cx")+14, y: b1.attr("cy")-14, opacity:1});
+                		nameOfb1[1].attr({text:"1", x: b1.attr("cx")+14+suffixPos.x, y: b1.attr("cy")-14+suffixPos.y, opacity:1});
+                		
+						nameOfc1[0].attr({text:"C", x: c1.attr("cx")+14, y: c1.attr("cy")-14, opacity:1});
+                		nameOfc1[1].attr({text:"1", x: c1.attr("cx")+14+suffixPos.x, y: c1.attr("cy")-14+suffixPos.y, opacity:1});
+						
+						nameOfp1[0].attr({text:"P", x: p1.attr("cx")+14, y: p1.attr("cy")+14, opacity:1});
+                		nameOfp1[1].attr({text:"1", x: p1.attr("cx")+14+suffixPos.x, y: p1.attr("cy")+14+suffixPos.y, opacity:1});
+                		
+                		nameOfq1[0].attr({text:"Q", x: q1.attr("cx")-14, y: q1.attr("cy")-14, opacity:1});
+                		nameOfq1[1].attr({text:"1", x: q1.attr("cx")-14+suffixPos.x, y: q1.attr("cy")-14+suffixPos.y, opacity:1});
+					}
+					
+					
+                    function answer() {                   
+                    	init();
+                    	if(phases>=1 && phases<4)step1();
+                    	if(phases>=2 && phases<4)step2();
+                    	if(phases>=3 && phases<4)step3();
+                    	if(phases>=4)step4();
+                    	if(phases>=5)step5();
+                    	if(phases>=6)step6();
+               		}
+                	
+                	initAllNames();
+                	answer();
+                
+                    //オリジナル
+                    controls[1].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        controls[4].attr({cx: X});
+                        nameOfControls[0][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[0][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[3][0].attr({x: X-14});
+                        nameOfControls[3][1].attr({x: X-14+suffixPos.x});
+                        path[0][1] = X;
+                        path[0][2] = Y;
+                        path[5][1] = X;
+                        path[5][2] = Y;
+                        path[6][1] = X;
+                        path[11][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    controls[2].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y});
+                        controls[5].attr({cx: X});
+                        nameOfControls[1][0].attr({x: X-14, y: Y+14}); //テキスト位置の更新
+                        nameOfControls[1][1].attr({x: X-14+suffixPos.x, y: Y+14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[4][0].attr({x: X-14});
+                        nameOfControls[4][1].attr({x: X-14+suffixPos.x});
+                        path[1][1] = X;
+                        path[1][2] = Y;
+                        path[2][1] = X;
+                        path[2][2] = Y;
+                        path[7][1] = X;
+                        path[8][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    controls[3].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        controls[6].attr({cx: X});
+                        nameOfControls[2][0].attr({x: X+14, y: Y+14}); //テキスト位置の更新
+                        nameOfControls[2][1].attr({x: X+14+suffixPos.x, y: Y+14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[5][0].attr({x: X+14});
+                        nameOfControls[5][1].attr({x: X+14+suffixPos.x});
+                        path[3][1] = X;
+                        path[3][2] = Y;
+                        path[4][1] = X;
+                        path[4][2] = Y;
+                        path[9][1] = X;
+                        path[10][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    controls[4].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y});
+                        controls[1].attr({cx: X});
+                        nameOfControls[3][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[3][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[0][0].attr({x: X-14});
+                        nameOfControls[0][1].attr({x: X-14+suffixPos.x});
+                        path[6][1] = X;
+                        path[6][2] = Y;
+                        path[11][1] = X;
+                        path[11][2] = Y;
+                        path[0][1] = X;
+                        path[5][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    controls[5].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        controls[2].attr({cx: X});
+                        nameOfControls[4][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[4][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[1][0].attr({x: X-14});
+                        nameOfControls[1][1].attr({x: X-14+suffixPos.x});
+                        path[7][1] = X;
+                        path[7][2] = Y;
+                        path[8][1] = X;
+                        path[8][2] = Y;
+                        path[1][1] = X;
+                        path[2][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    controls[6].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y});
+                        controls[3].attr({cx: X});
+                        nameOfControls[5][0].attr({x: X+14, y: Y+14}); //テキスト位置の更新
+                        nameOfControls[5][1].attr({x: X+14+suffixPos.x, y: Y+14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[2][0].attr({x: X+14});
+                        nameOfControls[2][1].attr({x: X+14+suffixPos.x});
+                        path[9][1] = X;
+                        path[9][2] = Y;
+                        path[10][1] = X;
+                        path[10][2] = Y;
+                        path[3][1] = X;
+                        path[4][1] = X;
+                        controls[0].attr({path: path});
+                        answer();
+                    };
+                    
+                    
+                    /* ここまで頂点 */
+                    
+                    /* ここから三角形上の点 */
+                    
+                    //Pf
+                    controls[7].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        controls[9].attr({cx: X});
+                        nameOfControls[6][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[6][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[7][0].attr({x: X-14});
+                        nameOfControls[7][1].attr({x: X-14+suffixPos.x});
+                        
+                        answer();
+                    };
+                    //Qf
+                    controls[8].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y});
+                        controls[10].attr({cx: X});
+                        nameOfControls[8][0].attr({x: X+14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[8][1].attr({x: X+14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[9][0].attr({x: X+14});
+                        nameOfControls[9][1].attr({x: X+14+suffixPos.x});
+                        
+                        answer();
+                    };
+                    //Pt
+                    controls[9].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        controls[7].attr({cx: X});
+                        nameOfControls[7][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[7][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[6][0].attr({x: X-14});
+                        nameOfControls[6][1].attr({x: X-14+suffixPos.x});
+                        
+                        answer();
+                    };
+                    //Qt
+                    controls[10].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y});
+                        controls[8].attr({cx: X});
+                        nameOfControls[9][0].attr({x: X+14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[9][1].attr({x: X+14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[8][0].attr({x: X+14});
+                        nameOfControls[8][1].attr({x: X+14+suffixPos.x});
+                        
+                        answer();
+                    };
+                    controls[0].update = function(){}
+                    controls.drag(move, up);
+                }
+                
+                //どれだけ動いたかをdx,dyに保存し、更新メソッドを呼び出す
+                function move(dx, dy) {
+                    this.update(dx - (this.dx || 0), dy - (this.dy || 0));
+                    this.dx = dx;
+                    this.dy = dy;
+                }
+                //ドラッグが終わったらクリア
+                function up() {
+                    this.dx = this.dy = 0;
+                }
+                
+                problem();
+            };
+            
+        </script>
+    </head>
+    <body>
+		<div id="step"></div>
+        <div id="holder"></div>
+    </body>
+</html>

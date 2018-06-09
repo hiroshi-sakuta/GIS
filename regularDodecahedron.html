@@ -1,0 +1,726 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>正12面体の作図</title>
+        <link rel="stylesheet" href="demo.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="demo-print.css" type="text/css" media="print">
+        
+        
+        
+        
+        /////google/////
+        <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-35267547-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+        
+        <script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+//点と名前はセットにしたい 座標と円も
+//垂直線を引く
+//平行線を引く
+//距離の計算
+//グリッドみたいな
+        	window.addEventListener('load', drawscreen, false);
+            function drawscreen() {
+            	//canvasの生成
+                var r = Raphael("holder", 740, 1050), //paperってインスタンス的な？
+                
+                //コントロールのデザイン情報を保持する連想配列
+                discattr = {fill: "#222", stroke: "#000"};
+                //attr : Sets the attributes of the element.
+                //rect(x, y, width, height, [r])
+                //外枠のデザイン
+                
+                r.rect(1, 1, r.width-1, r.height-1, 10).attr({stroke: "#666"});
+                r.text(r.width/2, 20, "正12面体の作図").attr({"font-size": 16});
+                var halfLine = r.height/2;
+                var pathHalfLine = [["M", 0, halfLine], ["L", r.width, halfLine]];
+                r.path(pathHalfLine);
+		
+
+	            //for(var i=0;i<5;i++)
+	            	//section.mousedown( function(e){this.attr({fill:"hsb(0.5,0.3,0.8)", stroke:"none"}) });
+
+	            //section[1].mousedown(function(){ section[1].attr({fill:Raphael.getColor(0.8), stroke:"red"}) });
+
+                var problem = function() {
+
+                	/* ためし */
+                	
+                	var step = Raphael("step", 740, 200);
+                	var phases = 0;
+                	var explanationText = new Array(
+	                	"一側面が水平面上にある正12面体を描け。",
+	                	"Step1 : ",
+	                	"Step2 : ",
+	                	"Step3 : ",
+	                	"Step4 : ",
+	                	"Step5 : "
+	                	);
+                	step.rect(1, 1, step.width-1, step.height-1, 10).attr({fill:"hsb(0,0,0.8)"});
+                	var explanationOfStep = step.text(370, 170, explanationText[0]).attr({"font-size":11});
+                	var section = new Array();
+                	var sectionName = new Array();
+                	
+                	for(var i=0;i<3;i++)
+                		var temp = Raphael.getColor(0.8);
+                		
+                	for(var i=0;i<explanationText.length-1;i++){
+	                	
+	                	section.push( step.circle(740/explanationText.length*(i+1),100, 30).attr({fill:"r white-"+Raphael.getColor(0.8), stroke:"none", "stroke-width":"3"}) );
+	                	sectionName.push( step.text(740/explanationText.length*(i+1), 100, 
+	                						"step"+(i+1)).attr({"font-size":12,"font-style":"italic"}) );
+	                	section[i].mousedown(function(e) { 
+	                		for(var i=0;i<explanationText.length-1;i++)
+	                			if(this != section[i]) section[i].animate({r:30},800);
+	                		initDisplay();
+	                		this.pushObj();
+	                		console.log(phases);
+	                		initAllNames();
+	                		answer();
+	                	});
+	                	section[i].mouseover(function(e) { this.animate({r:50},500); });
+	                	section[i].mouseout(function(e) { if(this.isDisplay == false)this.animate({r:30},800) });
+	                	//section[i].mouseover(function(e) { this.attr({fill:"white",stroke:"black"}); });
+	                	//section[i].mouseout(function(e) { this.attr({stroke:"none"}); });
+	                }
+	                
+	                initDisplay();
+	                function initDisplay(){
+	                	for(var i=0;i<explanationText.length-1;i++)
+		                	section[i].isDisplay = false;
+	                }
+	                
+	                function setPhases(id){
+		                phases = id;
+		                explanationOfStep.attr({text: explanationText[id]});
+		                if(id != 0) section[id-1].isDisplay = true;
+		                else initDisplay();
+	                }
+	                
+	                section[0].pushObj = function(){
+	                	(phases!=1) ? setPhases(1) : setPhases(0);
+		        	}
+		            section[1].pushObj = function(){
+	                	(phases!=2) ? setPhases(2) : setPhases(0);
+			      	}
+			   	    section[2].pushObj = function(){
+		        	    (phases!=3) ? setPhases(3) : setPhases(0);
+ 		      	    }
+	        	    section[3].pushObj = function(){
+			            (phases!=4) ? setPhases(4) : setPhases(0);
+			        }
+			        section[4].pushObj = function(){
+			            (phases!=5) ? setPhases(5) : setPhases(0);
+			        }
+ 
+
+			/*******      本題       ********/
+			
+			//初期位置の設定
+                	//M:moveto C:curveto L:lineto
+                	//左上始点(x,y) 右上制御点(ax,ay)
+                	//左下制御点(bx,by) 右下終点(zx,zy)
+                	var p1 = {x:170, y:310+halfLine};//a   halfLineは525
+                	var p2 = {x:330, y:240+halfLine};//c
+                	var p3 = {x:50,  y:80+halfLine};//b
+                	
+                	var p4 = {x:p1.x, y:450};//a
+                	var p5 = {x:p2.x, y:490};//c	
+                	var p6 = {x:p3.x, y:520};//b
+			
+                	var p1 = new Array();
+                	var p2 = new Array();
+                	
+                	var radius = 80;
+                	var center = halfLine/2;
+                	var centerPoint = r.circle(r.width/2, center, 2).attr(discattr);
+                	
+                	for(var i=0;i<5;i++){
+	                	var matrix = Raphael.matrix();
+	                	matrix.rotate( i*360/5, r.width/2, center);
+	                	//r.circle(matrix.x(r.width/2, r.height/2-50), matrix.y(r.width/2, r.height/2-50), 5);
+	                	p1.push({ x:matrix.x(r.width/2, center-radius) , y:matrix.y(r.width/2, center-radius)});
+	                	
+	                	matrix = Raphael.matrix();
+	                	matrix.rotate( i*360/5+360/10, r.width/2, center);
+	                	//r.circle(matrix.x(r.width/2, center-radius), matrix.y(r.width/2, center-radius), 5).attr({fill:"clear"});
+	                	p2.push({ x:matrix.x(r.width/2, center-radius) , y:matrix.y(r.width/2, center-radius)});
+	                }
+			
+                	
+
+			//それぞれのパスを配列で保存
+                    var path_top = [["M", p1[0].x, p1[0].y], ["L", p1[1].x, p1[1].y],
+                    		["M", p1[1].x, p1[1].y], ["L", p1[2].x, p1[2].y],
+                    		["M", p1[2].x, p1[2].y], ["L", p1[3].x, p1[3].y],
+                    		["M", p1[3].x, p1[3].y], ["L", p1[4].x, p1[4].y],
+                    		["M", p1[4].x, p1[4].y], ["L", p1[0].x, p1[0].y]];
+                    		
+                    var path_bottom = [["M", p2[0].x, p2[0].y], ["L", p2[1].x, p2[1].y],
+                    		["M", p2[1].x, p2[1].y], ["L", p2[2].x, p2[2].y],
+                    		["M", p2[2].x, p2[2].y], ["L", p2[3].x, p2[3].y],
+                    		["M", p2[3].x, p2[3].y], ["L", p2[4].x, p2[4].y],
+                    		["M", p2[4].x, p2[4].y], ["L", p2[0].x, p2[0].y]];
+
+                    //コントロールをsetで保存                    
+                    var controls = r.set(
+                    		//2点のコントロールを結ぶ線
+                            r.path(path_top).attr({"stroke-width":2}),
+                            
+                            // 三角形の頂点
+                            r.circle(p1[0].x, p1[0].y, 5).attr(discattr)
+                    );
+                    
+                    
+                    /* var clone = controls[0].clone();
+                	
+		             clone.attr({ path: Raphael.transformPath(clone.attr("path"),  "t"+100+","+0+"r38") });
+		             */
+
+                    var bottom = r.path(path_bottom).attr({"stroke-width":2, "stroke-dasharray":"- "});
+                    
+                    
+                    
+                    
+			//点に対するサフィックスの位置の指定
+		            var suffixPos = {x:7, y:3};
+		            var suffixPosForM ={x:8, y:3};
+		            var fSize = 14;
+		            
+			//点の名前とサフィックスをsetで保持
+                    var nameOfControls = r.set(
+                    		//各頂点
+                            /*r.set(	
+                            	r.text(p1[0].x-14, p1[0].y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1[0].x-14+suffixPos.x, p1[0].y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(	
+                            	r.text(p1[1].x-14, p1[1].y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1[1].x-14+suffixPos.x, p1[1].y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(
+                            	r.text(p1[2].x-14, p1[2].y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1[2].x-14+suffixPos.x, p1[2].y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(	
+                            	r.text(p1[3].x-14, p1[3].y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1[3].x-14+suffixPos.x, p1[3].y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                            	),
+                            r.set(
+                            	r.text(p1[4].x-14, p1[4].y-14, "A").attr({stroke: "#256", "font-size": 14}),
+                            	r.text(p1[4].x-14+suffixPos.x, p1[4].y-14+suffixPos.y, "F").attr({stroke: "#256", "font-size":7})
+                           		)
+                           	*/	
+                    );
+                    
+                    
+                    //各変数（図形：パス、円など）の宣言　　解答をステップ毎に表示するためここに宣言
+                   
+					
+					// ＊座標、円、名前を連想配列にでもまとめるといいかも
+					
+					var inter;
+					
+					function setTextSets(){
+						return r.set( r.text(null), r.text(null) );
+					}
+								
+					function initName (name){
+						name[0].attr({stroke: "#256", "font-size":14, opacity:0});
+						name[1].attr({stroke: "#256", "font-size":7, opacity:0});
+					}
+					
+					function initAllNames(){
+						initName (nameOfdt);
+						initName (nameOfdf);
+						
+					}
+					
+
+					function init(){
+						
+
+						verticalLine.attr({path:null});						
+						
+						tempLine.attr({path:null});
+						aTbT.attr({path:null});
+						okT.attr({path:null});
+						eTkT.attr({path:null});
+						path_decagon.attr({path:null});
+						connect_top.attr({path:null});
+						connect_bottom.attr({path:null});
+						circle_pq.attr({path:null});
+						circle_pd.attr({path:null});
+						eTcT.attr({path:null});
+						tTdT.attr({path:null});
+						h1_path.attr({path:null});
+						h2_path.attr({path:null});
+						lp_path.attr({path:null});
+						under_line.attr({path:null});
+						
+						kT.attr({stroke:"none"});
+						p_point.attr({stroke:"none"});
+						q_point.attr({stroke:"none"});
+						K_point.attr({stroke:"none"});
+						K_theother_point.attr({stroke:"none"});
+						L_point.attr({stroke:"none"});
+						L_theother_point.attr({stroke:"none"});
+						testCir.attr({stroke:"none"});
+						
+						for(var i=0;i<5;i++){
+	                		vertex_under[i].attr({stroke:"none"});
+	                		vertex_mid_under[i].attr({stroke:"none"});
+	                		vertex_top[i].attr({stroke:"none"});
+	                		vertex_mid_top[i].attr({stroke:"none"});
+	                	}
+	                	for(var i=0;i<10;i++){
+							pentagon_path[i].attr({path:null});
+						}
+					}
+
+				
+					
+					var nameOfdt = setTextSets();
+					var nameOfdf = setTextSets();
+					
+					
+					var tempLine = r.path(null);
+					
+					var aTbT = r.path(null);
+					var okT = r.path(null);
+					var eTkT  = r.path(null);
+					var kT = r.circle(null);
+					
+					var decagon = new Array();
+					var path_decagon = r.path(null);
+					var connect_top = r.path(null);
+					var connect_bottom = r.path(null);
+					var p_point = r.circle(null);
+					var q_point = r.circle(null);
+					var pq_radius;
+					var circle_pq = r.path(null);
+					var pd_radius;
+					var circle_pd = r.path(null);
+					var eTcT = r.path(null);
+					var tTdT = r.path(null);
+					
+					var h1_path = r.path(null);
+					var h2_path = r.path(null);
+					var h1_dist;
+					var h2_dist;
+					var K_point = r.circle(null);
+					var L_point = r.circle(null);
+					var K_theother_point = r.circle(null);
+					var L_theother_point = r.circle(null);
+					var lp_path = r.path(null);
+					
+					var under_line = r.path(null); 
+					var behind_point = new Array();
+					var behind_index;
+					
+					var testCir = r.circle(null);
+					
+					var verticalLine = r.path(null);
+					verticalLine.hide();
+					var vertex_under = new Array();
+					var vertex_mid_under = new Array();
+					var vertex_top = new Array();
+					var vertex_mid_top = new Array();
+					for(var i=0;i<5;i++){
+	                	vertex_under[i] = r.circle(null);
+	                	vertex_mid_under[i] = r.circle(null);
+	                	vertex_top[i] = r.circle(null);
+	                	vertex_mid_top[i] = r.circle(null);
+                	}
+					var pentagon_path = new Array();
+					for(var i=0;i<10;i++){
+						pentagon_path[i] = r.path(null);
+					}
+					
+					var scale=3;
+					
+					function step1(){
+
+						aTbT.attr({path: Raphael.transformPath([["M", p2[3].x, p2[3].y], ["L", p2[4].x, p2[4].y]], "s"+scale+","+scale),
+										 stroke: "green"}
+								);					
+						okT.attr({path: Raphael.transformPath(
+							[["M", centerPoint.attr("cx"), centerPoint.attr("cy")], ["L", p2[4].x, p2[4].y]], 
+							"s" + scale + "," + scale + "," + centerPoint.attr("cx")+"," + centerPoint.attr("cy"))
+							});
+						eTkT.attr({path: Raphael.transformPath(
+							[["M", centerPoint.attr("cx"), centerPoint.attr("cy")], ["L", p1[4].x, p1[4].y]], 
+							
+							"t" + -(centerPoint.attr("cx")-p2[0].x) + "," + -(centerPoint.attr("cy")-p2[0].y) +
+							"s" + scale + "," + scale + "," + centerPoint.attr("cx")+"," + centerPoint.attr("cy")
+							)
+							});
+						inter = Raphael.pathIntersection(okT.attr("path"), eTkT.attr("path"));
+						kT.attr({ cx:inter[0].x, cy:inter[0].y, r:5, stroke:"red"});
+							
+					}	
+					
+					
+					
+					function step2(){
+									
+						// controlsが中心の真上の時(初期状態)に角度0,そこから時計回りで＋ 0~360
+						var angle_controls = 180 - Math.atan2(controls[1].attr("cx") - centerPoint.attr("cx"),
+									   						  controls[1].attr("cy") - centerPoint.attr("cy"))
+									   															 * 180/Math.PI;
+						//どのゾーンにいるか分かるように整数に変換 0~9
+						var controls_posit = Math.floor( (angle_controls+18)/36 );													 
+						if(controls_posit == 10)controls_posit = 0;
+						
+						//0だと 0,1,2
+						//1だと 9,0,1
+						//2    7,8,9,0,1
+						//一番上だけわかれば良い
+						//decagonのindexに変換
+						behind_index = (11 - controls_posit)%10;
+
+						
+
+						for(var i=0;i<10;i++){
+							var matrix = Raphael.matrix();
+							matrix.rotate( i*360/10, centerPoint.attr("cx"), centerPoint.attr("cy"));
+							decagon[i] = { x:matrix.x(kT.attr("cx"), kT.attr("cy")), y:matrix.y(kT.attr("cx"), kT.attr("cy")) };
+							//これだとフラクタルな図形が描けたり
+							//decagon[i] = r.circle(matrix.x(kT.attr("cx"), kT.attr("cy")), matrix.y(kT.attr("cx"), kT.attr("cy")), 5);
+						}
+						
+						var str = new Array();
+						for(var i=0;i<10;i++){
+							var j = i*2;
+							str[j] = ["M", decagon[i].x, decagon[i].y];
+							
+							str[j+1] = ["L", decagon[(i+1)%10].x, decagon[(i+1)%10].y];
+						}
+						path_decagon.attr({path:str});
+						
+						
+						str = new Array();
+						for(var i=0;i<5;i++){
+							var j = i*2;
+							str[j] = ["M", p1[i].x, p1[i].y];
+							
+							str[j+1] = ["L", decagon[(j+1)%10].x, decagon[(j+1)%10].y]; //1,3,5,7,9
+						}
+						connect_top.attr({path:str});
+						
+						str = new Array();
+						for(var i=0;i<5;i++){
+							var j = i*2;
+							str[j] = ["M", p2[i].x, p2[i].y];
+							
+							str[j+1] = ["L", decagon[(j+2)%10].x, decagon[(j+2)%10].y]; //0,2,4,6,8
+						}
+						connect_bottom.attr({path:str, "stroke-dasharray":"- "});
+						
+												
+						
+					}
+					
+					
+					function step3(){
+						//p,qを求める
+						eTcT.attr({path: [["M", p2[0].x, p2[0].y], ["L", p2[2].x, p2[2].y]],"stroke-width":0.5});
+						tTdT.attr({path: [["M", p1[4].x, p1[4].y], ["L", p2[1].x, p2[1].y]]});
+						inter = Raphael.pathIntersection(eTcT.attr("path"), tTdT.attr("path"));
+						q_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"green"});
+						
+						inter = Raphael.pathIntersection(tTdT.attr("path"), aTbT.attr("path"));
+						p_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"green"});
+						
+						
+						pq_radius = Math.sqrt(Math.pow(q_point.attr("cx") - p_point.attr("cx"),2) 
+                							+ Math.pow(q_point.attr("cy") - p_point.attr("cy"),2));
+                		
+                		//半径75中心(100,100)の円を書くときのパス↓
+						//var path1 = "M 25,100 A 75,75 0 1,1 175,100 A 75,75 0 1,1 25,100 Z";
+                		var path_pq = "M" + (p_point.attr("cx")-pq_radius) + "," + p_point.attr("cy") +
+                					"A" + pq_radius + "," + pq_radius + " 0 1,1 " + 
+                							(p_point.attr("cx")+pq_radius) + "," + p_point.attr("cy") +
+                					"A" + pq_radius + "," + pq_radius + " 0 1,1 " + 
+                							(p_point.attr("cx")-pq_radius) + "," + p_point.attr("cy") +
+                					"Z";
+						circle_pq.attr({path:path_pq});
+
+						pd_radius = Math.sqrt(Math.pow(p2[1].x - p_point.attr("cx"),2) 
+                							+ Math.pow(p2[1].y - p_point.attr("cy"),2));               		
+                		h2_path.attr({path: Raphael.transformPath(
+							eTkT.attr("path"),
+							"r" + 90 + "," +  kT.attr("cx") + "," + kT.attr("cy")
+							//"t" + -(centerPoint.attr("cx")-p2[0].x) + "," + -(centerPoint.attr("cy")-p2[0].y) +
+							//"s" + scale + "," + scale + "," + centerPoint.attr("cx")+"," + centerPoint.attr("cy")
+							)
+							});
+                		
+                		inter = Raphael.pathIntersection(circle_pq.attr("path"), h2_path.attr("path"));
+						K_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"red"});
+
+					}
+					
+					
+					function step4(){              		
+                		var path_pd = "M" + (p_point.attr("cx")-pd_radius) + "," + p_point.attr("cy") +
+                					"A" + pd_radius + "," + pd_radius + " 0 1,1 " + 
+                							(p_point.attr("cx")+pd_radius) + "," + p_point.attr("cy") +
+                					"A" + pd_radius + "," + pd_radius + " 0 1,1 " + 
+                							(p_point.attr("cx")-pd_radius) + "," + p_point.attr("cy") +
+                					"Z";
+						circle_pd.attr({path:path_pd});
+						
+						lp_path.attr({path: Raphael.transformPath(
+							[["M", p_point.attr("cx"), p_point.attr("cy")], ["L", K_point.attr("cx"), K_point.attr("cy")]],
+							//"t" + -(centerPoint.attr("cx")-p2[0].x) + "," + -(centerPoint.attr("cy")-p2[0].y) +
+							"s" + scale + "," + scale + "," + p_point.attr("cx")+"," + p_point.attr("cy")
+							)
+							});
+						inter = Raphael.pathIntersection(circle_pd.attr("path"), lp_path.attr("path"));
+						L_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"red"});
+						
+						h1_path.attr({path: Raphael.transformPath(
+							h2_path.attr("path"),
+							"t" + -(K_point.attr("cx") - L_point.attr("cx")) + "," + -(K_point.attr("cy")-L_point.attr("cy"))// +
+							//"s" + scale + "," + scale + "," + p_point.attr("cx")+"," + p_point.attr("cy")
+							)
+							});
+							
+						tempLine.attr({path: Raphael.transformPath(
+							tTdT.attr("path"),
+							"s" + scale + "," + scale
+							)
+							});
+						inter = Raphael.pathIntersection(tempLine.attr("path"), h2_path.attr("path"));
+						K_theother_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"blue"});
+						inter = Raphael.pathIntersection(tempLine.attr("path"), h1_path.attr("path"));
+						L_theother_point.attr({cx:inter[0].x, cy:inter[0].y, r:5, stroke:"blue"});
+						
+						h2_dist = Math.sqrt(Math.pow(K_point.attr("cx") - K_theother_point.attr("cx"),2) 
+                						  + Math.pow(K_point.attr("cy") - K_theother_point.attr("cy"),2));
+                		h1_dist = Math.sqrt(Math.pow(L_point.attr("cx") - L_theother_point.attr("cx"),2) 
+                						  + Math.pow(L_point.attr("cy") - L_theother_point.attr("cy"),2));
+                		
+                		
+					}
+					
+
+					function step5(){
+						
+						var radius_decagon = Math.sqrt(Math.pow(decagon[0].x - decagon[5].x,2) 
+                									 + Math.pow(decagon[0].y - decagon[5].y,2));
+                		under_line.attr({path: [["M", 0, r.height - (halfLine - radius_decagon)/2],
+                								["L", r.width, r.height - (halfLine - radius_decagon)/2]]});
+						
+						
+						for(var i=0;i<5;i++){
+                			verticalLine.attr({path: [["M", p2[i].x, 0],
+                									  ["L", p2[i].x, r.height]]});
+                			inter = Raphael.pathIntersection(verticalLine.attr("path"), under_line.attr("path"));
+	                		vertex_under[i].attr({cx:inter[0].x, cy:inter[0].y, r:2, stroke:"black"});
+	                		
+	                		verticalLine.attr({path: [["M", p1[i].x, 0],
+                									  ["L", p1[i].x, r.height]]});
+                			inter = Raphael.pathIntersection(verticalLine.attr("path"), under_line.attr("path"));
+	                		vertex_top[i].attr({cx:inter[0].x, cy:inter[0].y - (h1_dist+h2_dist), r:2, stroke:"black"});
+	                		
+	                		//平面図で破線が正面図で下
+	                		verticalLine.attr({path: [["M", decagon[i*2].x, 0],
+                									  ["L", decagon[i*2].x, r.height]]}); //0,2,4,6,8
+                			inter = Raphael.pathIntersection(verticalLine.attr("path"), under_line.attr("path"));
+	                		vertex_mid_under[i].attr({cx:inter[0].x, cy:inter[0].y - h2_dist, r:2, stroke:"black"});
+	                		
+	                		//平面図で実線が正面図で上
+	                		verticalLine.attr({path: [["M", decagon[i*2+1].x, 0],
+                									  ["L", decagon[i*2+1].x, r.height]]});  //1,3,5,7,9
+                			inter = Raphael.pathIntersection(verticalLine.attr("path"), under_line.attr("path"));
+	                		vertex_mid_top[i].attr({cx:inter[0].x, cy:inter[0].y - h1_dist, r:2, stroke:"black"});
+                		}
+                		
+                		//確認用　一番後ろにある頂点を緑にする
+                		//if(behind_index%2 == 0)vertex_mid_under[behind_index/2].attr({fill:"green", r:5});         		
+                		//else vertex_mid_top[(behind_index-1)/2].attr({fill:"green", r:5}); 
+					
+						
+						//下側の五角形
+						for(var i=0;i<5;i++){
+							str = new Array();
+							var index = 0;
+							var j = i*2;
+							
+							str[index++] = ["M", vertex_under[(i+1)%5].attr("cx"), vertex_under[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_under[i].attr("cx"), vertex_under[i].attr("cy")];
+							str[index++] = ["L", vertex_mid_under[(i+1)%5].attr("cx"), vertex_mid_under[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_mid_top[(i+1)%5].attr("cx"), vertex_mid_top[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_mid_under[(i+2)%5].attr("cx"), vertex_mid_under[(i+2)%5].attr("cy")];
+							str[index++] = ["L", vertex_under[(i+1)%5].attr("cx"), vertex_under[(i+1)%5].attr("cy")];
+							pentagon_path[i].attr({path:str, stroke:"red", "stroke-dasharray":"none", "stroke-width":2});
+						}
+			
+						
+						//上側の五角形
+						for(var i=0;i<5;i++){
+							str = new Array();
+							var index = 0;
+							str[index++] = ["M", vertex_top[(i+1)%5].attr("cx"), vertex_top[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_top[i].attr("cx"), vertex_top[i].attr("cy")];
+							str[index++] = ["L", vertex_mid_top[i].attr("cx"), vertex_mid_top[i].attr("cy")];
+							str[index++] = ["L", vertex_mid_under[(i+1)%5].attr("cx"), vertex_mid_under[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_mid_top[(i+1)%5].attr("cx"), vertex_mid_top[(i+1)%5].attr("cy")];
+							str[index++] = ["L", vertex_top[(i+1)%5].attr("cx"), vertex_top[(i+1)%5].attr("cy")];
+							pentagon_path[i+5].attr({path:str, stroke:"red", "stroke-dasharray":"none", "stroke-width":2});
+							
+						}
+						
+						
+						//裏側は破線にして薄くする
+						
+						//vertex_mid_underのインデックス  - 1 = pentagon_pathのインデックス
+						//vertex_mid_topのインデックス - 1 = pentagon_pathのインデックス
+						
+						//behind_indexから上の式によりpentagon_pathのインデックスを得る
+						//behind_indexが偶数なら
+						if(behind_index%2 == 0){
+							var j = behind_index/2 - 1;
+							var i = j-1;
+							var k = j+1;
+							if(j<0)j+=5;//-1なら5に
+							if(i<0)i+=5;//-1なら5に、−2なら4に
+							if(k>4)k-=5;//5なら0に
+							pentagon_path[i+5].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[j+5].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[k+5].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							
+							var l = behind_index/2 - 1;
+							var m = l-1;
+							if(l<0)l+=5;
+							if(m<0)m+=5;
+							pentagon_path[l].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[m].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+						}
+						//behind_indexが奇数なら
+						else{
+							var j = (behind_index-1)/2 - 1;
+							var i = j-1;
+							var k = j+1;
+							if(j<0)j+=5;//-1なら5に
+							if(i<0)i+=5;//-1なら5に、−2なら4に
+							if(k>4)k-=5;//5なら0に
+							pentagon_path[i].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[j].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[k].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							
+							var l = (behind_index-1)/2 - 1;
+							var m = l+1;
+							if(l<0)l+=5;
+							if(m>4)m-=5;
+							pentagon_path[l+5].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+							pentagon_path[m+5].attr({"stroke-dasharray":"- ", "stroke-width":0.5});
+						}
+					}
+					
+					
+                    function answer() {                   
+                    	init();
+                    	if(phases>=1)step1();
+                    	if(phases>=2)step2();
+                    	if(phases>=3)step3();
+                    	if(phases>=4)step4();
+                    	if(phases>=5)step5();
+               		}
+                	
+                	initAllNames();
+                	answer();
+                
+                    //オリジナル
+                    //af
+                    controls[1].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        var dist = Math.sqrt(Math.pow(X - centerPoint.attr("cx"),2) 
+                						   + Math.pow(Y - centerPoint.attr("cy"),2));
+                		//後でコメントアウトして
+                		dist=0;
+                        if(dist < 115){
+                        	this.attr({cx: X}); //コントロールの座標を更新
+                        	this.attr({cy: Y}); //コントロールの座標を更新
+                        	radius -= y; 
+                        
+                        /*controls[4].attr({cx: X});
+                        nameOfControls[0][0].attr({x: X-14, y: Y-14}); //テキスト位置の更新
+                        nameOfControls[0][1].attr({x: X-14+suffixPos.x, y: Y-14+suffixPos.y}); //テキスト位置の更新
+                        nameOfControls[3][0].attr({x: X-14});
+                        nameOfControls[3][1].attr({x: X-14+suffixPos.x});*/
+                        
+                	        for(var i=0;i<5;i++){
+	        	        		var matrix = Raphael.matrix();
+	    	            		matrix.rotate( i*360/5, r.width/2, center);
+		                		p1[i] = { x:matrix.x(this.attr("cx"), center-radius) , y:matrix.y(this.attr("cx"), center-radius)};
+	                	
+	                			matrix = Raphael.matrix();
+	                			matrix.rotate( i*360/5+360/10, r.width/2, center);
+	                		
+	                			p2[i] = { x:matrix.x(this.attr("cx"), center-radius) , y:matrix.y(this.attr("cx"), center-radius)};
+	                		}
+	                	
+	                		for(var i=0;i<5;i++){
+	                	    	var j = i*2;
+	                			path_top[j][1] = p1[i].x;
+	                			path_top[j][2] = p1[i].y;
+	                			path_top[j+1][1] = p1[(i+1)%5].x;
+	                			path_top[j+1][2] = p1[(i+1)%5].y;
+	                			path_bottom[j][1] = p2[i].x;
+	                			path_bottom[j][2] = p2[i].y;
+	                			path_bottom[j+1][1] = p2[(i+1)%5].x;
+	                			path_bottom[j+1][2] = p2[(i+1)%5].y;
+	                		}
+                        
+                        
+                        	controls[0].attr({path: path_top});
+                        	bottom.attr({path: path_bottom});
+                        	answer();
+                        }
+                    };
+                    
+                    
+                    /* ここまで頂点 */
+                                        
+                    controls[0].update = function(){}
+                    controls.drag(move, up);
+                }
+                
+                //どれだけ動いたかをdx,dyに保存し、更新メソッドを呼び出す
+                function move(dx, dy) {
+                    this.update(dx - (this.dx || 0), dy - (this.dy || 0));
+                    this.dx = dx;
+                    this.dy = dy;
+                }
+                //ドラッグが終わったらクリア
+                function up() {
+                    this.dx = this.dy = 0;
+                }
+                
+                problem();
+            };
+            
+        </script>
+    </head>
+    <body>
+		<div id="step"></div>
+        <div id="holder"></div>
+    </body>
+</html>

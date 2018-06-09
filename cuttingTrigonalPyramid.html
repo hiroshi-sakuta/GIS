@@ -1,0 +1,574 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>三角錐の切断</title>
+        <link rel="stylesheet" href="demo.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="demo-print.css" type="text/css" media="print">
+        
+        <script type="text/javascript">
+
+	        var _gaq = _gaq || [];
+	        _gaq.push(['_setAccount', 'UA-35267547-3']);
+	        _gaq.push(['_trackPageview']);
+
+	        (function() {
+		        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		     })();
+
+		</script>
+        
+
+        <script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+//点と名前はセットにしたい 座標と円も
+//垂直線を引く
+//平行線を引く
+//距離の計算
+//グリッドみたいな
+        	window.addEventListener('load', drawscreen, false);
+            function drawscreen() {
+            	//canvasの生成
+                var r = Raphael("holder", 740, 1050),
+                
+                //コントロールのデザイン情報を保持する連想配列
+                discattr = {fill: "#222", stroke: "#000"};
+
+                //外枠のデザイン
+                r.rect(1, 1, r.width-1, r.height-1, 10).attr({stroke: "#666"});
+                r.text(r.width/2, 20, "三角錐の切断").attr({"font-size": 16});
+                
+                var halfLineX = r.width/2;
+                var halfLineY = r.height/2+50;
+
+                var problem = function() {
+
+                	/* ためし */
+                	
+                	var step = Raphael("subContents", 200, 740);
+                	var phases = 0;
+                	var explanationText = new Array(
+	                	"一側面が水平面上にある正12面体を描け。",
+	                	"Step1 : ",
+	                	"Step2 : ",
+	                	"Step3 : "
+	                	);
+                	step.rect(1, 1, step.width-1, step.height-1, 10).attr({fill:"hsb(0,0,0.8)"});
+                	var explanationOfStep = step.text(370, 170, explanationText[0]).attr({"font-size":11});
+                	var section = new Array();
+                	var sectionName = new Array();
+                	
+                	for(var i=0;i<3;i++)
+                		var temp = Raphael.getColor(0.8);
+ // Button Control               		
+                	for(var i=0;i<explanationText.length-1;i++){
+	                	
+	                	section.push( step.circle(100, 740/explanationText.length*(i+1), 30).attr({fill:"r white-"+Raphael.getColor(0.8), stroke:"none", "stroke-width":"3"}) );
+	                	sectionName.push( step.text(100, 740/explanationText.length*(i+1), 
+	                						"step"+(i+1)).attr({"font-size":12,"font-style":"italic"}) );
+	                	section[i].mousedown(function(e) { 
+	                		for(var i=0;i<explanationText.length-1;i++)
+	                			if(this != section[i]) section[i].animate({r:30},800);
+	                		initDisplay();
+	                		this.pushObj();
+	                		console.log(phases);
+	                		//initAllNames();
+	                		answer();
+	                	});
+// Button push sequence
+	                	section[i].mouseover(function(e) { this.animate({r:50},500); });
+	                	section[i].mouseout(function(e) { if(this.isDisplay == false)this.animate({r:30},800) });
+	                	//section[i].mouseover(function(e) { this.attr({fill:"white",stroke:"black"}); });
+	                	//section[i].mouseout(function(e) { this.attr({stroke:"none"}); });
+	                }
+	                
+	                initDisplay();
+	                function initDisplay(){
+	                	for(var i=0;i<explanationText.length-1;i++)
+		                	section[i].isDisplay = false;
+	                }
+	                
+	                function setPhases(id){
+		                phases = id;
+		                explanationOfStep.attr({text: explanationText[id]});
+		                if(id != 0) section[id-1].isDisplay = true;
+		                else initDisplay();
+	                }
+	                section[0].pushObj = function(){
+	                	(phases!=1) ? setPhases(1) : setPhases(0);
+		        	}
+		            section[1].pushObj = function(){
+	                	(phases!=2) ? setPhases(2) : setPhases(0);
+			      	}
+			   	    section[2].pushObj = function(){
+		        	    (phases!=3) ? setPhases(3) : setPhases(0);
+ 		      	    }/*
+ 		      	    section[3].pushObj = function(){
+	                	(phases!=4) ? setPhases(4) : setPhases(0);
+			      	}
+			   	    section[4].pushObj = function(){
+		        	    (phases!=5) ? setPhases(5) : setPhases(0);
+ 		      	    }*/
+
+			/*******      本題       ********/
+					
+					r.path([["M", 0, halfLineY], ["L", r.width, halfLineY]]);
+		            //初期位置の設定
+                	//M:moveto C:curveto L:lineto
+                	//左上始点(x,y) 右上制御点(ax,ay)
+                	//左下制御点(bx,by) 右下終点(zx,zy)
+                	//サイズ 740, 1050
+                	
+                	/* 平面図 */
+                	var p1 = {x:160, y:420};
+                	var p2 = {x:560, y:480};
+                	var p3 = {x:380, y:190};  	
+                	var p4 = {x:350, y:350};//中
+                	
+                	/* 正面図 */
+                	var p5 = {x:p1.x, y:400+halfLineY};
+                	var p6 = {x:p2.x, y:400+halfLineY};
+                	var p7 = {x:p3.x, y:400+halfLineY};
+                	var p8 = {x:p4.x, y:halfLineY};	
+                	
+                	/* 切断平面 */
+                	var p9 = {x:280 , y:50};
+                	var p10 = {x:700, y:halfLineY};
+                	var p11 = {x:80, y:400+halfLineY};
+
+			//それぞれのパスを配列で保存
+					               			
+                    var pyramid_top_path = [["M", p1.x, p1.y], ["L", p2.x, p2.y],
+                    						["M", p2.x, p2.y], ["L", p3.x, p3.y],
+                    						["M", p3.x, p3.y], ["L", p1.x, p1.y],
+                    						["M", p4.x, p4.y], ["L", p1.x, p1.y],
+                    						["M", p4.x, p4.y], ["L", p2.x, p2.y],
+                    						["M", p4.x, p4.y], ["L", p3.x, p3.y]];
+                    
+                    var pyramid_front_path = [["M", p5.x, p5.y], ["L", p6.x, p6.y],
+                    						  ["M", p6.x, p6.y], ["L", p7.x, p7.y],
+                    						  ["M", p7.x, p7.y], ["L", p5.x, p5.y],
+                    						  ["M", p8.x, p8.y], ["L", p5.x, p5.y],
+                    						  ["M", p8.x, p8.y], ["L", p6.x, p6.y],
+                    						  ["M", p8.x, p8.y], ["L", p7.x, p7.y]];
+                    
+                    var cutting_path = [["M", p9.x, p9.y], ["L", p10.x, p10.y],
+                    					["M", p10.x, p10.y], ["L", p11.x, p11.y]];
+                    
+                    var pyramid_top_path_line = new Array();
+					var pyramid_front_path_line = new Array();
+					var cutting_path_line = r.path(cutting_path);
+					for(var i=0;i<4;i++){
+						pyramid_top_path_line[i] = r.path(null).attr({"stroke-width":2});
+						pyramid_front_path_line[i] = r.path(null).attr({"stroke-width":2});
+					}
+                    
+                    function setPath(){
+                    	for(var i=0;i<3;i++){
+                    		var j = i*2;
+                    		pyramid_top_path_line[i].attr({path: [pyramid_top_path[j], pyramid_top_path[j+1],
+                    						  			  	  pyramid_top_path[j+6], pyramid_top_path[j+7],
+                    						  			  	  pyramid_top_path[(i==2)?6:j+8], pyramid_top_path[(i==2)?6:j+8]] });
+                    		pyramid_front_path_line[i].attr({path: [pyramid_front_path[j], pyramid_front_path[j+1],
+                    						  			  	  pyramid_front_path[j+6], pyramid_front_path[j+7],
+                    						  			  	  pyramid_front_path[(i==2)?6:j+8], pyramid_front_path[(i==2)?6:j+8]] });
+                    	}
+                    }
+                    pyramid_front_path_line[2].attr({"stroke-dasharray":"- ", "stroke-width":1});	
+                    					  	
+                    var paths = r.set(
+                    	r.path( pyramid_top_path ).attr({"stroke-width":0}),
+                    	r.path( pyramid_front_path ).attr({"stroke-width":0}),
+                    	r.path( cutting_path ).attr({"stroke-width":0})
+                    );
+                    
+                    
+                    //コントロールをsetで保存                    
+                    var controls = r.set(
+                    		//2点のコントロールを結ぶ線
+                            r.path(null).attr({"stroke-width":2}), //今回はダミーです。
+                            
+                            /* 平面図 */
+                            r.circle(p1.x, p1.y, 5).attr(discattr),
+                            r.circle(p2.x, p2.y, 5).attr(discattr),
+                            r.circle(p3.x, p3.y, 5).attr(discattr),
+                            r.circle(p4.x, p4.y, 5).attr(discattr),
+                            /* 正面図 */
+                            r.circle(p5.x, p5.y, 5).attr(discattr),
+                            r.circle(p6.x, p6.y, 5).attr(discattr),
+                            r.circle(p7.x, p7.y, 5).attr(discattr),
+                            r.circle(p8.x, p8.y, 5).attr(discattr),
+                            /* 切断平面 */
+                            r.circle(p9.x, p9.y, 5).attr(discattr),
+                            r.circle(p10.x, p10.y, 5).attr(discattr),
+                            r.circle(p11.x, p11.y, 5).attr(discattr)
+                    );
+                    
+			//点に対するサフィックスの位置の指定
+		            var suffixPos = {x:7, y:3};
+		            var suffixPosForM ={x:8, y:3};
+		            var fSize = 14;
+		            
+			//点の名前とサフィックスをsetで保持
+                    var nameOfControls = r.set(
+    		
+                    );
+                   
+					function setTextSets(){
+						return r.set( r.text(null), r.text(null) );
+					}
+								
+					function initName (name){
+						name[0].attr({stroke: "#256", "font-size":14, opacity:0});
+						name[1].attr({stroke: "#256", "font-size":7, opacity:0});
+					}
+					
+					function initAllNames(){
+						//initName (nameOfdt);
+						
+					}
+
+					function init(){
+
+						
+						verticalLine.attr({path:null});
+						point_on_cutting_plane.attr({stroke:"none"});
+						
+						section_top.attr({path:null});
+						section_front.attr({path:null});
+						for(var i=0;i<3;i++){
+							point_on_top_pyramid[i].attr({stroke:"none"});
+							point_on_front_pyramid[i].attr({stroke:"none"});
+							connect_lines[i].attr({path:null});
+						}
+						for(var i=0;i<4;i++)
+							line_to_cutting_plane[i].attr({path:null});
+					}
+					
+					
+					var line_to_cutting_plane = new Array();
+					for(var i=0;i<4;i++){
+						line_to_cutting_plane[i] = r.path(null);
+					}
+					
+					var inter;
+					var verticalLine = r.path(null).hide();
+					var point_on_cutting_plane = r.circle(null).attr({stroke:"black"});
+					
+					var point_on_top_pyramid = new Array();
+					var point_on_front_pyramid = new Array();
+					var connect_lines = new Array();
+					var cutting_point_on_front_pyramid = new Array();
+							
+					for(var i=0;i<3;i++){
+						point_on_top_pyramid[i] = r.circle(null).attr({stroke:"black"});
+						point_on_front_pyramid[i] = r.circle(null).attr({stroke:"black"});
+						connect_lines[i] = r.path(null);
+					}
+					
+					var section_top = r.path(null).attr({fill:"red", "fill-opacity":0.5, "stroke-width":2});
+					var section_front = r.path(null).attr({fill:"red", "fill-opacity":0.5, "stroke-width":2});
+					section_top.insertAfter(controls[3]);
+					
+
+					function step1(){
+						
+						verticalLine.attr({path:[["M", controls[8].attr("cx"), controls[8].attr("cy")], 
+												 ["L", controls[8].attr("cx") , 0]]});
+					
+						inter = Raphael.pathIntersection(verticalLine.attr("path"), cutting_path_line.attr("path"));
+						point_on_cutting_plane.attr({cx:inter[0].x, cy:inter[0].y, r:5});
+						line_to_cutting_plane[3].attr({path:[["M", point_on_cutting_plane.attr("cx"), point_on_cutting_plane.attr("cy")], 
+												 			 ["L", controls[8].attr("cx") , halfLineY]]});
+					
+					}
+
+					/*function step2(){
+						scale = diagonal_length / Raphael.getTotalLength([path[0], path[1]]);
+						line_extended.attr({path:Raphael.transformPath([path[0], path[1]],"S"+scale+","+scale)});						
+					}
+					
+					function step3(){		
+						inter = Raphael.pathIntersection(line_extended.attr("path"), [["M", 0, halfLineY], ["L", r.width, halfLineY]]);
+						inter = Raphael.pathIntersection([path[4], path[5]], [["M", inter[0].x, 0], ["L", inter[0].x, r.height]]);
+						verticalLine2.attr({path: [["M", inter[0].x, inter[0].y], ["L", inter[0].x , halfLineY]]});
+						
+					}*/
+					
+					
+					function step2(){
+						for(var i=0;i<3;i++){
+							inter = Raphael.pathIntersection(cutting_path_line.attr("path"),
+															[pyramid_front_path[i*2+6], pyramid_front_path[i*2+7]]);
+							cutting_point_on_front_pyramid[i] = {x:inter[0].x, y:inter[0].y};
+						}
+					
+						for(var i=0;i<3;i++){
+							line_to_cutting_plane[i].attr({path:[["M", cutting_point_on_front_pyramid[i].x,
+																	   cutting_point_on_front_pyramid[i].y],
+																 ["L", cutting_point_on_front_pyramid[i].x, halfLineY], 
+															 ["L",point_on_cutting_plane.attr("cx"),point_on_cutting_plane.attr("cy")]]});
+							inter = Raphael.pathIntersection(line_to_cutting_plane[i].attr("path"), 
+															[pyramid_top_path[i*2+6], pyramid_top_path[i*2+7]]);
+							point_on_top_pyramid[i].attr({cx:inter[0].x, cy:inter[0].y, r:5});
+						}
+						section_top.attr({path:[["M", point_on_top_pyramid[0].attr("cx"),
+													  point_on_top_pyramid[0].attr("cy")],
+												["L", point_on_top_pyramid[1].attr("cx"), 				
+										 			  point_on_top_pyramid[1].attr("cy")], 
+												["L", point_on_top_pyramid[2].attr("cx"), 				
+										 			  point_on_top_pyramid[2].attr("cy")],
+										 		["L", point_on_top_pyramid[0].attr("cx"), 				
+										 			  point_on_top_pyramid[0].attr("cy")] ]});
+						
+					}
+					
+					function step3(){
+						for(var i=0;i<3;i++){
+							verticalLine.attr({path:[["M", point_on_top_pyramid[i].attr("cx"), point_on_top_pyramid[i].attr("cy")], 
+												 	 ["L", point_on_top_pyramid[i].attr("cx"), r.height]]});
+							inter = Raphael.pathIntersection(verticalLine.attr("path"), 
+														[pyramid_front_path[i*2+6], pyramid_front_path[i*2+7]]);
+							point_on_front_pyramid[i].attr({cx:inter[0].x, cy:inter[0].y, r:5});
+							connect_lines[i].attr({path:[["M", point_on_front_pyramid[i].attr("cx"), point_on_front_pyramid[i].attr("cy")], 
+												 	 	 ["L", point_on_top_pyramid[i].attr("cx"), point_on_top_pyramid[i].attr("cy")]]});
+						}
+						
+						section_front.attr({path:[["M", point_on_front_pyramid[0].attr("cx"),
+													  point_on_front_pyramid[0].attr("cy")],
+												["L", point_on_front_pyramid[1].attr("cx"), 				
+										 			  point_on_front_pyramid[1].attr("cy")], 
+												["L", point_on_front_pyramid[2].attr("cx"), 				
+										 			  point_on_front_pyramid[2].attr("cy")],
+										 		["L", point_on_front_pyramid[0].attr("cx"), 				
+										 			  point_on_front_pyramid[0].attr("cy")] ]});
+					}
+					
+                    function answer() {                   
+                    	init();
+                    	setPath();
+                    	if(phases>=1)step1();
+                    	if(phases>=2)step2();
+                    	if(phases>=3)step3();
+                    	if(phases>=4)step4();
+                    	if(phases>=5)step5();
+                    	
+               		}
+                	
+                	initAllNames();
+                	answer();
+                	
+                	
+                	
+                	/*
+                	var pyramid_top_path = [["M", p1.x, p1.y], ["L", p2.x, p2.y],
+                    						["M", p2.x, p2.y], ["L", p3.x, p3.y],
+                    						["M", p3.x, p3.y], ["L", p1.x, p1.y],
+                    						["M", p4.x, p4.y], ["L", p1.x, p1.y],
+                    						["M", p4.x, p4.y], ["L", p2.x, p2.y],
+                    						["M", p4.x, p4.y], ["L", p3.x, p3.y]];
+                    
+                    var pyramid_front_path = [["M", p5.x, p5.y], ["L", p6.x, p6.y],
+                    						  ["M", p6.x, p6.y], ["L", p7.x, p7.y],
+                    						  ["M", p7.x, p7.y], ["L", p5.x, p5.y],
+                    						  ["M", p8.x, p8.y], ["L", p5.x, p5.y],
+                    						  ["M", p8.x, p8.y], ["L", p6.x, p6.y],
+                    						  ["M", p8.x, p8.y], ["L", p7.x, p7.y]];
+                    
+                    var cutting_path = [["M", p9.x, p9.y], ["L", p10.x, p10.y],
+                    					["M", p10.x, p10.y], ["L", p11.x, p11.y]];
+                	*/
+                	
+                	
+                	/* 平面図 */
+                    controls[1].update = function (x, y) {
+                    	
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X<controls[7].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	controls[5].attr({cx: X});
+                        	pyramid_top_path[0][1] = pyramid_top_path[5][1] = pyramid_top_path[7][1] = X;
+                        	pyramid_top_path[0][2] = pyramid_top_path[5][2] = pyramid_top_path[7][2] = Y;
+                        	pyramid_front_path[0][1] = pyramid_front_path[5][1] = pyramid_front_path[7][1] = X;
+
+                        	answer();
+                        }
+                    };
+                    
+                    controls[2].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X>controls[7].attr("cx")){
+                        	this.attr({cx: X, cy: Y});
+                        	controls[6].attr({cx: X});
+                        	pyramid_top_path[2][1] = pyramid_top_path[1][1] = pyramid_top_path[9][1] = X;
+                        	pyramid_top_path[2][2] = pyramid_top_path[1][2] = pyramid_top_path[9][2] = Y;
+                        	pyramid_front_path[2][1] = pyramid_front_path[1][1] = pyramid_front_path[9][1] = X;
+
+                        	answer();
+                        }
+                    };
+                    
+                    controls[3].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X>controls[5].attr("cx") && X<controls[6].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	controls[7].attr({cx: X});
+                        	pyramid_top_path[4][1] = pyramid_top_path[3][1] = pyramid_top_path[11][1] = X;
+                        	pyramid_top_path[4][2] = pyramid_top_path[3][2] = pyramid_top_path[11][2] = Y;
+                        	pyramid_front_path[4][1] = pyramid_front_path[3][1] = pyramid_front_path[11][1] = X;
+
+                        	answer();
+                        }
+                    };
+                    
+                    controls[4].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X>controls[9].attr("cx")){
+                        	this.attr({cx: X, cy: Y});
+                        	controls[8].attr({cx: X});
+                        	pyramid_top_path[6][1] = pyramid_top_path[8][1] = pyramid_top_path[10][1] = X;
+                        	pyramid_top_path[6][2] = pyramid_top_path[8][2] = pyramid_top_path[10][2] = Y;
+                        	pyramid_front_path[6][1] = pyramid_front_path[8][1] = pyramid_front_path[10][1] = X;
+
+                        	answer();
+                        }
+                    };
+                    
+                    /* 正面図 */
+                    controls[5].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X<controls[7].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	controls[1].attr({cx: X});
+                        	pyramid_top_path[0][1] = pyramid_top_path[5][1] = pyramid_top_path[7][1] = X;
+                        	pyramid_front_path[0][1] = pyramid_front_path[5][1] = pyramid_front_path[7][1] = X;
+                        	pyramid_front_path[0][2] = pyramid_front_path[5][2] = pyramid_front_path[7][2] = Y;
+                        
+                        	pyramid_front_path[2][2] = pyramid_front_path[1][2] = pyramid_front_path[9][2] = Y;
+                        	pyramid_front_path[4][2] = pyramid_front_path[3][2] = pyramid_front_path[11][2] = Y;
+                        	controls[6].attr({cy: Y});
+                        	controls[7].attr({cy: Y});
+                        
+                        	answer();
+                        }
+                    };
+                    
+                    controls[6].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                        	Y = this.attr("cy") + y;
+                        if(X>controls[7].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	controls[2].attr({cx: X});
+                        	pyramid_top_path[2][1] = pyramid_top_path[1][1] = pyramid_top_path[9][1] = X;
+                        	pyramid_front_path[2][1] = pyramid_front_path[1][1] = pyramid_front_path[9][1] = X;
+                        	pyramid_front_path[2][2] = pyramid_front_path[1][2] = pyramid_front_path[9][2] = Y;
+                        
+                        	pyramid_front_path[0][2] = pyramid_front_path[5][2] = pyramid_front_path[7][2] = Y;
+                        	pyramid_front_path[4][2] = pyramid_front_path[3][2] = pyramid_front_path[11][2] = Y;
+                        	controls[5].attr({cy: Y});
+                       		controls[7].attr({cy: Y});
+                        
+                        	answer();
+                        }
+                    };
+                    
+                    controls[7].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X>controls[5].attr("cx") && X<controls[6].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	controls[3].attr({cx: X});
+                        	pyramid_top_path[4][1] = pyramid_top_path[3][1] = pyramid_top_path[11][1] = X;
+                        	pyramid_front_path[4][1] = pyramid_front_path[3][1] = pyramid_front_path[11][1] = X;
+                        	pyramid_front_path[4][2] = pyramid_front_path[3][2] = pyramid_front_path[11][2] = Y;
+                        
+                        	pyramid_front_path[0][2] = pyramid_front_path[5][2] = pyramid_front_path[7][2] = Y;
+                        	pyramid_front_path[2][2] = pyramid_front_path[1][2] = pyramid_front_path[9][2] = Y;
+                        	controls[5].attr({cy: Y});
+                        	controls[6].attr({cy: Y});
+                        
+                        	answer();
+                        }
+                    };
+                    
+                    controls[8].update = function (x, y) {
+                        var X = this.attr("cx") + x;
+                        if(X>controls[9].attr("cx")){
+                        	this.attr({cx: X});
+                        	controls[4].attr({cx: X});
+                        	pyramid_top_path[6][1] = pyramid_top_path[8][1] = pyramid_top_path[10][1] = X;
+                        	pyramid_front_path[6][1] = pyramid_front_path[8][1] = pyramid_front_path[10][1] = X;
+                        
+                        	answer();
+                        }
+                    };
+                    
+                    /* 切断平面 */
+                    controls[9].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        if(X<controls[4].attr("cx")){
+                        	this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        	cutting_path[0][1] = X;
+                        	cutting_path[0][2] = Y;
+                        	cutting_path_line.attr({path: cutting_path});
+                        	answer();
+                        }
+                    };
+                    
+                    controls[10].update = function (x, y) {
+                        var X = this.attr("cx") + x;
+                        this.attr({cx: X});
+                        cutting_path[1][1] = cutting_path[2][1] = X;
+                        
+                        cutting_path_line.attr({path: cutting_path});
+                        answer();
+                    };
+                    
+                    //Pf
+                    controls[11].update = function (x, y) {
+                        var X = this.attr("cx") + x,
+                            Y = this.attr("cy") + y;
+                        this.attr({cx: X, cy: Y}); //コントロールの座標を更新
+                        cutting_path[3][1] = X;
+                        cutting_path[3][2] = Y;
+                        cutting_path_line.attr({path: cutting_path});
+                        answer();
+                    };
+                    
+                    controls[0].update = function(){}
+                    controls.drag(move, up);
+                    
+                }
+                
+                //どれだけ動いたかをdx,dyに保存し、更新メソッドを呼び出す
+                function move(dx, dy) {
+                    this.update(dx - (this.dx || 0), dy - (this.dy || 0));
+                    this.dx = dx;
+                    this.dy = dy;
+                }
+                //ドラッグが終わったらクリア
+                function up() {
+                    this.dx = this.dy = 0;
+                }
+                
+                problem();
+                
+            };
+            
+        </script>
+    </head>
+    <body>
+		<div id="holder"></div>
+		<div id="subContents"></div>
+        
+    </body>
+</html>
